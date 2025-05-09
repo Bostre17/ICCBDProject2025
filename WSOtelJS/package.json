@@ -1,0 +1,16 @@
+{
+  "name": "visit-counter",
+  "version": "1.0.0",
+  "description": "Web server che conta visite utilizzando OpenTelemetry e Prometheus",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@opentelemetry/sdk-metrics": "^1.12.0",
+    "@opentelemetry/exporter-prometheus": "^0.41.0",
+    "@opentelemetry/resources": "^1.12.0",
+    "@opentelemetry/semantic-conventions": "^1.12.0"
+  }
+}

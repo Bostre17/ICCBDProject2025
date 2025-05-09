@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'visit-counter'
+    static_configs:
+      - targets: ['visit-counter:9464']

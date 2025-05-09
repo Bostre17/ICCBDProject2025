@@ -1,0 +1,25 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  webserver:
+    build: .
+    ports:
+      - "8080:8080" 
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
