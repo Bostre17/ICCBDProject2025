@@ -208,23 +208,6 @@ Docker viene utilizzato per semplificare il deployment e garantire un ambiente c
 1. **Container Web Server**: compila ed esegue l'applicazione C++
 2. **Container Prometheus**: raccoglie e memorizza le metriche
 
-### Dockerfile Implicito
-
-Il servizio webserver utilizza un Dockerfile generato automaticamente da Docker Compose. Una versione esplicita potrebbe essere:
-
-```dockerfile
-FROM gcc:latest as builder
-WORKDIR /app
-COPY . .
-RUN mkdir -p build && cd build && cmake .. && cmake --build .
-
-FROM debian:bullseye-slim
-WORKDIR /app
-COPY --from=builder /app/build/webserver .
-EXPOSE 8080
-CMD ["./webserver"]
-```
-
 ### Docker Compose
 
 Il file `docker-compose.yml` orchestra l'intera infrastruttura:
@@ -255,28 +238,6 @@ networks:
     driver: bridge
 ```
 
-## 👨‍💻 Guida allo Sviluppo
-
-### Estendere il Server
-
-Per aggiungere un nuovo endpoint:
-
-```cpp
-server.Get("/nuovo-endpoint", [&](const httplib::Request& req, httplib::Response& res) {
-    // Avvia uno span OpenTelemetry per questa richiesta
-    auto span = std::make_unique<otel::Span>("handle_nuovo_endpoint");
-    
-    // Incrementa i contatori e tratta la richiesta
-    counter.incrementTotal();
-    counter.incrementPath("/nuovo-endpoint");
-    
-    // Genera risposta e imposta lo stato
-    res.set_content("Contenuto", "text/html");
-    
-    // Completa lo span con lo stato
-    span->SetAttribute("http.status_code", 200);
-});
-```
 
 ### Aggiungere Nuove Metriche
 
@@ -291,7 +252,7 @@ my_custom_metric = otel::MetricsRegistry::Instance().CreateCounter(
 my_custom_metric->Add(1, {{"label_key", "label_value"}});
 ```
 
-## ❓ FAQ
+## Scelte implementative
 
 **Q: Che librerie esterne sono utilizzate?**  
 A: Il progetto usa principalmente `cpp-httplib` come libreria HTTP header-only. Le funzionalità di OpenTelemetry sono implementate nativamente per scopi didattici.
@@ -307,14 +268,7 @@ A: Questo è un progetto dimostrativo. Per un uso in produzione consigliamo:
    - Implementare rate limiting e sicurezza aggiuntiva
 
 **Q: Quali sono i requisiti di rete?**  
-A: Il server utilizza la porta 8080, Prometheus la porta 9090. Assicurati che queste porte siano disponibili.
-
----
-
-## 📄 Licenza
-
-Questo progetto è rilasciato sotto licenza MIT. Vedi il file `LICENSE` per ulteriori dettagli.
-
+A: Il server utilizza la porta 8080, Prometheus la porta 9090.
 ---
 
 Creato come progetto dimostrativo per l'integrazione di metriche e tracing in applicazioni C++ moderne.
