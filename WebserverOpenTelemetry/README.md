@@ -267,8 +267,5 @@ A: Questo è un progetto dimostrativo. Per un uso in produzione consigliamo:
    - Configurare TLS/HTTPS
    - Implementare rate limiting e sicurezza aggiuntiva
 
-**Q: Quali sono i requisiti di rete?**  
-A: Il server utilizza la porta 8080, Prometheus la porta 9090.
----
 
 Creato come progetto dimostrativo per l'integrazione di metriche e tracing in applicazioni C++ moderne.
