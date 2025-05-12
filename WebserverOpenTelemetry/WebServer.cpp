@@ -1,25 +1,19 @@
-﻿// WebServer.cpp
-// Un semplice web server C++ che conta le visite e offre metriche per Prometheus.
-// Include una integrazione minimale (custom e non ufficiale) con OpenTelemetry
-// per mostrare il concetto di Tracing e Metriche.
-// Utilizza la libreria header-only cpp-httplib per la gestione del server HTTP.
+#include <iostream> 
+#include <string>   
+#include <atomic>   
+#include <thread>  
+#include <mutex>    
+#include <chrono>  
+#include <ctime>    
+#include <sstream> 
+#include <map>    
+#include <iomanip>  
+#include <unordered_map> 
+#include <vector>   
+#include <memory>  
 
-#include <iostream> // Per input/output su console (std::cout)
-#include <string>   // Per la gestione delle stringhe (std::string)
-#include <atomic>   // Per contatori atomici thread-safe (std::atomic)
-#include <thread>   // Per la gestione dei thread (anche se cpp-httplib gestisce i suoi)
-#include <mutex>    // Per la protezione delle risorse condivise (std::mutex, std::lock_guard)
-#include <chrono>   // Per misurare il tempo (std::chrono) - utile per durate degli span
-#include <ctime>    // Per ottenere il tempo corrente per i log (std::time, std::localtime)
-#include <sstream>  // Per costruire stringhe dinamicamente (std::stringstream) - utile per HTML e metriche
-#include <map>      // Per memorizzare contatori per percorso (std::map) - mantiene l'ordine per percorso
-#include <iomanip>  // Per formattare l'output del tempo (std::put_time)
-#include <unordered_map> // Per memorizzare i valori delle metriche OTEL con label (std::unordered_map) - accesso più veloce
-#include <vector>   // Per collezioni dinamiche, es. attributi span (std::vector)
-#include <memory>   // Per la gestione smart dei puntatori (std::unique_ptr)
-
-// Includiamo la libreria web server header-only.
-// Assicurati che il file "httplib.h" sia nel percorso di inclusione del tuo compilatore.
+//Includiamo la libreria web server header-only.
+//Assicurati che il file "httplib.h" sia nel percorso di inclusione del tuo compilatore.
 // Link utile: https://github.com/yhirose/cpp-httplib
 #include "httplib.h"
 
@@ -603,8 +597,8 @@ int main() {
             << "body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }"
             << "h1 { color: #333; }"
             << ".note { background-color: #f8f9fa; border-left: 4px solid #4285f4; padding: 15px; margin-top: 20px; }"
-            << ".note p { margin: 0 0 10px 0; }" // Spazio tra i paragrafi nella nota
-            << ".note p:last-child { margin-bottom: 0; }" // Nessun margine inferiore sull'ultimo paragrafo
+            << ".note p { margin: 0 0 10px 0; }"
+            << ".note p:last-child { margin-bottom: 0; }"
             << ".back-link { margin-top: 20px; }"
             << ".back-link a { color: #3498db; text-decoration: none; }"
             << ".back-link a:hover { text-decoration: underline; }"
