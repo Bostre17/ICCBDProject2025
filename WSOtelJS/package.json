@@ -1,13 +1,14 @@
 {
-  "name": "visit-counter",
-  "version": "1.0.0",
-  "description": "Web server che conta visite utilizzando OpenTelemetry e Prometheus",
+  "name": "visit-counter-scalable",
+  "version": "2.0.0",
+  "description": "Web server scalabile che conta visite utilizzando OpenTelemetry, Prometheus e Redis",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
+    "redis": "^4.6.13",
     "@opentelemetry/sdk-metrics": "^1.12.0",
     "@opentelemetry/exporter-prometheus": "^0.41.0",
     "@opentelemetry/resources": "^1.12.0",
