@@ -1,0 +1,12 @@
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'visit-counter'
+    # Usa la service discovery di Docker per trovare tutte le repliche
+    dns_sd_configs:
+      - names:
+          - 'visit-counter'
+        type: 'A'
+        port: 9464

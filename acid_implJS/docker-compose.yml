@@ -1,0 +1,75 @@
+# docker-compose.yml (per acid-implementation)
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "81:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      visit-counter:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  visit-counter:
+    build: .
+    deploy:
+      replicas: 3
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        # --- MODIFICA CHIAVE ---
+        # Attendiamo che PostgreSQL sia realmente pronto
+        condition: service_healthy
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: visitdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-net
+    # --- NUOVA SEZIONE: HEALTHCHECK PER POSTGRES ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d visitdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  # Prometheus e Grafana sono identici
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090" # Porta 9091 per non avere conflitti
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - app-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000" # Porta 3002 per non avere conflitti
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

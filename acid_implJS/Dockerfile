@@ -1,4 +1,8 @@
+# Dockerfile
 FROM node:18-alpine
+
+# Installa 'curl' per permettere all'health check di funzionare
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
