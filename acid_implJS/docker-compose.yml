@@ -1,4 +1,4 @@
-# docker-compose.yml (per acid-implementation)
+# acid_implJS/docker-compose.yml
 version: '3.8'
 
 services:
@@ -21,8 +21,6 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
-        # --- MODIFICA CHIAVE ---
-        # Attendiamo che PostgreSQL sia realmente pronto
         condition: service_healthy
     networks:
       - app-net
@@ -46,27 +44,18 @@ services:
       - ./init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-net
-    # --- NUOVA SEZIONE: HEALTHCHECK PER POSTGRES ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d visitdb"]
       interval: 10s
       timeout: 5s
       retries: 5
-      
-  # Prometheus e Grafana sono identici
+
   prometheus:
     image: prom/prometheus:latest
     ports:
-      - "9091:9090" # Porta 9091 per non avere conflitti
+      - "9091:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - app-net
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3002:3000" # Porta 3002 per non avere conflitti
     networks:
       - app-net
 

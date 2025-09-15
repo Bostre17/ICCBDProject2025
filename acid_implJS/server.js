@@ -1,45 +1,35 @@
-// server.js (per la versione ACID con PostgreSQL)
+// acid_implJS/server.js
 const express = require('express');
 const { Pool } = require('pg');
-
-// --- QUESTA È LA CORREZIONE FONDAMENTALE ---
 const { MeterProvider } = require('@opentelemetry/sdk-metrics');
-const { ValueType } = require('@opentelemetry/api'); // ValueType va importato da @opentelemetry/api
-// --- FINE DELLA CORREZIONE ---
-
+const { ValueType } = require('@opentelemetry/api');
 const { PrometheusExporter } = require('@opentelemetry/exporter-prometheus');
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 
-// Funzione Principale Asincrona per l'Avvio
 async function startServer() {
     const app = express();
     const port = process.env.PORT || 3000;
 
-    // Configurazione e Connessione a PostgreSQL
     const pool = new Pool({
         user: 'user',
         host: 'postgres',
         database: 'visitdb',
         password: 'password',
         port: 5432,
-        // Aggiungiamo tentativi di connessione per robustezza
-        connectionTimeoutMillis: 5000,
     });
 
     try {
-        // Testiamo la connessione prima di procedere
         const client = await pool.connect();
         console.log('Connesso a PostgreSQL');
         client.release();
     } catch (err) {
-        console.error('Impossibile connettersi a PostgreSQL. Il server non si avvierà.', err);
+        console.error('Impossibile connettersi a PostgreSQL.', err);
         process.exit(1);
     }
     
     const COUNTER_NAME = 'total';
 
-    // Configurazione OpenTelemetry e Metriche
     const prometheusExporter = new PrometheusExporter({ port: 9464 });
     const resource = new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: 'visit-counter-acid',
@@ -55,10 +45,8 @@ async function startServer() {
         description: 'Durata delle richieste HTTP in secondi', unit: 's', valueType: ValueType.DOUBLE,
     });
 
-    // Middleware Express
     app.use(async (req, res, next) => {
         const startTime = new Date();
-        
         if (req.path === '/') {
             const client = await pool.connect();
             try {
@@ -74,17 +62,14 @@ async function startServer() {
                 client.release();
             }
         }
-
         res.on('finish', () => {
             const endTime = new Date();
             const durationSeconds = (endTime - startTime) / 1000.0;
             requestLatency.record(durationSeconds, { method: req.method, path: req.path, status_code: res.statusCode });
         });
-        
         next();
     });
 
-    // Routes
     app.get('/', async (req, res) => {
         let visitsCount = 0;
         try {
@@ -96,11 +81,9 @@ async function startServer() {
         } catch (err) {
            console.error("Errore nel leggere il contatore da PostgreSQL:", err);
         }
-      
         res.send(`
-        <html><head><title>Visit Counter - Versione ACID</title>
-            <style>body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }</style></head>
-            <body><h1>Benvenuto!</h1><p>Stato gestito da <strong>PostgreSQL</strong> con transazioni ACID.</p>
+        <html><head><title>Visit Counter - Versione ACID</title></head>
+            <body><h1>Benvenuto!</h1><p>Database <strong>PostgreSQL</strong> con transazioni ACID.</p>
             <div style="font-size: 48px;">${visitsCount}</div><p>Visite totali</p>
             </body></html>
         `);
@@ -108,9 +91,8 @@ async function startServer() {
 
     app.get('/health', (req, res) => res.status(200).send('OK'));
 
-    // Avvio del Server
     app.listen(port, () => {
-        console.log(`Server ACID pronto e in ascolto sulla porta ${port}`);
+        console.log(`Server ACID pronto sulla porta ${port}`);
     });
 }
 
