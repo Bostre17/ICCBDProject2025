@@ -26,13 +26,13 @@
       "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 },
       "id": 10,
       "options": {
-        "content": "# 📊 Dashboard Performance: Implementazione BASE (MongoDB)",
+        "content": "# 📊 Dashboard Performance: Implementazione BASE (MongoDB) - Potenziata",
         "mode": "markdown"
       },
       "type": "text"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -47,7 +47,7 @@
           "unit": "reqps"
         }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 2 },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 2 },
       "id": 1,
       "options": {
         "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto",
@@ -56,7 +56,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
           "expr": "sum(rate(visits_total{job=\"visit-counter\"}[1m]))",
           "legendFormat": "Reqs / Sec", "range": true, "refId": "A"
         }
@@ -64,7 +64,7 @@
       "title": "Throughput (Reqs / sec)", "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -72,21 +72,21 @@
           "unit": "s"
         }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 2 },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 2 },
       "id": 4,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
           "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket{job=\"visit-counter\"}[1m])) by (le))",
           "legendFormat": "Latenza p95", "range": true, "refId": "A"
         }
       ],
-      "title": "Latenza p95 (secondi)", "type": "timeseries"
+      "title": "Latenza Richieste p95 (secondi)", "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 2 },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 2 },
       "id": 2,
       "options": {
         "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto",
@@ -95,7 +95,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
           "expr": "sum(visits_total{job=\"visit-counter\"})",
           "legendFormat": "Visite Totali", "range": true, "refId": "A"
         }
@@ -103,7 +103,7 @@
       "title": "Conteggio Totale Visite", "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -116,7 +116,7 @@
           }
         }
       },
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 2 },
       "id": 8,
       "options": {
         "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto",
@@ -124,12 +124,57 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "P1A5E3F5A82A51A18" },
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
           "expr": "count(up{job=\"visit-counter\"})",
           "legendFormat": "Istanze attive", "range": true, "refId": "A"
         }
       ],
       "title": "Istanze Attive", "type": "stat"
+    },
+    {
+        "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+        "gridPos": { "h": 8, "w": 8, "x": 0, "y": 10 },
+        "id": 12,
+        "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+            "expr": "sum(rate(http_requests_total{job=\"visit-counter\"}[1m])) by (code)",
+            "legendFormat": "Codice {{code}}", "range": true, "refId": "A"
+          }
+        ],
+        "title": "Richieste per Status Code (al minuto)", "type": "timeseries"
+    },
+    {
+        "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+        "gridPos": { "h": 8, "w": 8, "x": 8, "y": 10 },
+        "id": 14,
+        "options": {
+          "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto",
+          "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+        },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+            "expr": "sum(active_requests_total{job=\"visit-counter\"})",
+            "legendFormat": "Richieste attive", "range": true, "refId": "A"
+          }
+        ],
+        "title": "Richieste Attive", "type": "stat"
+    },
+    {
+        "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+        "gridPos": { "h": 8, "w": 8, "x": 16, "y": 10 },
+        "id": 16,
+        "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+        "targets": [
+          {
+            "datasource": { "type": "prometheus", "uid": "prometheus_ds_visits" },
+            "expr": "histogram_quantile(0.95, sum(rate(mongodb_query_latency_seconds_bucket{job=\"visit-counter\"}[1m])) by (le, operation))",
+            "legendFormat": "p95 {{operation}}", "range": true, "refId": "A"
+          }
+        ],
+        "title": "Latenza Query MongoDB (p95)", "type": "timeseries"
     }
   ],
   "refresh": "10s",
@@ -142,6 +187,6 @@
   "timezone": "browser",
   "title": "BASE Performance Dashboard",
   "uid": "a90e3c0e-42ee-42d7-a5f1-61b8f0f08e45",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }
