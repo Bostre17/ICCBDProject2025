@@ -79,7 +79,7 @@ services:
     networks:
       - app-net
     volumes:
-      - ./k6-script.js:/scripts/k6-script.js
+      - ./scripts:/scripts  
     command: run /scripts/k6-script.js
 
 networks:
