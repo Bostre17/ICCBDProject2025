@@ -59,6 +59,33 @@ services:
     networks:
       - app-net
 
+  # --- NUOVI SERVIZI AGGIUNTI ---
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000" # Usiamo la porta 3002 per non andare in conflitto con l'altra istanza
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks:
+      - app-net
+    depends_on:
+      - prometheus
+
+  k6:
+    image: grafana/k6:latest
+    profiles: ["load-test"]
+    depends_on:
+      - nginx
+    networks:
+      - app-net
+    volumes:
+      - ./scripts:/scripts # Montiamo la cartella degli script
+    command: run /scripts/k6-script.js
+
 networks:
   app-net:
     driver: bridge
