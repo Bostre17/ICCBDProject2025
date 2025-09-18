@@ -1,0 +1,17 @@
+# base_implJS/grafana/dashboards/dashboards.yml
+apiVersion: 1
+
+providers:
+- name: 'bostre-project-provider' # Nome più specifico
+  orgId: 1
+  folder: ''
+  type: file
+  disableDeletion: false
+  editable: true
+  updateIntervalSeconds: 10 # Controlla per aggiornamenti ogni 10 secondi
+  allowUiUpdates: true      # Permette modifiche dall'interfaccia
+  options:
+    path: /etc/grafana/provisioning/dashboards
+    # Aggiungiamo questo per una maggiore compatibilità
+    # tra versioni di Grafana
+    foldersFromFilesStructure: false

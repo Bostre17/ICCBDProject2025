@@ -1,0 +1,113 @@
+# MODIFICA: Aggiunto un nome stabile per l'intero progetto
+name: iccbd-benchmark-stack
+
+services:
+  # --- STACK BASE (MongoDB) ---
+  nginx-base:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./base_implJS/nginx.conf:/etc/nginx/nginx.conf
+    depends_on: [base-app]
+    networks: [app-net]
+
+  base-app:
+    build: ./base_implJS
+    deploy: { replicas: 3 }
+    restart: unless-stopped
+    depends_on: [mongo]
+    networks: [app-net]
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    volumes:
+      - ./base_implJS/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks: [app-net]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- STACK ACID (PostgreSQL) ---
+  nginx-acid:
+    image: nginx:latest
+    ports:
+      - "81:80"
+    volumes:
+      - ./acid_implJS/nginx.conf:/etc/nginx/nginx.conf
+    depends_on: [acid-app]
+    networks: [app-net]
+
+  acid-app:
+    build: ./acid_implJS
+    deploy: { replicas: 3 }
+    restart: unless-stopped
+    depends_on: [postgres]
+    networks: [app-net]
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: visitdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./acid_implJS/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [app-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d visitdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- STACK DI MONITORAGGIO UNIFICATO ---
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks: [app-net]
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    networks: [app-net]
+    depends_on: [prometheus]
+
+  # --- SERVIZI DI TEST DI CARICO ---
+  k6-base:
+    image: grafana/k6:latest
+    profiles: ["load-test-base", "load-test-all"]
+    networks: [app-net]
+    volumes:
+      - ./base_implJS/scripts:/scripts
+    command: run /scripts/k6-script.js
+    environment:
+      - K6_HTTP_REQ_URL=http://nginx-base
+
+  k6-acid:
+    image: grafana/k6:latest
+    profiles: ["load-test-acid", "load-test-all"]
+    networks: [app-net]
+    volumes:
+      - ./acid_implJS/scripts:/scripts
+    command: run /scripts/k6-script.js
+    environment:
+      - K6_HTTP_REQ_URL=http://nginx-acid
+
+networks:
+  app-net:
+    driver: bridge
+    # MODIFICA: Rimosso il 'name' specifico. Ora il nome sarà gestito dal progetto.

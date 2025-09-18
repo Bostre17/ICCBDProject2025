@@ -1,0 +1,34 @@
+{
+  "annotations": { "list": [ { "builtIn": 1, "datasource": { "type": "grafana", "uid": "-- Grafana --" }, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
+  "editable": true, "fiscalYearStartMonth": 0, "graphTooltip": 0, "id": 3, "links": [], "liveNow": false,
+  "panels": [
+    { "gridPos": { "h": 2, "w": 24, "x": 0, "y": 0 }, "id": 10, "options": { "content": "# 📊 Dashboard Comparativa: MongoDB (BASE) vs PostgreSQL (ACID)", "mode": "markdown" }, "type": "text" },
+    { "gridPos": { "h": 2, "w": 24, "x": 0, "y": 2 }, "id": 20, "options": { "content": "## 🚀 Throughput (Richieste al secondo)", "mode": "markdown" }, "type": "text" },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "reqps" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 }, "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" }, "expr": "sum(rate(visits_total{job=\"base_mongodb\"}[1m]))", "legendFormat": "MongoDB (BASE)", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" }, "expr": "sum(rate(visits_total{job=\"acid_postgres\"}[1m]))", "legendFormat": "PostgreSQL (ACID)", "refId": "B" }
+      ],
+      "title": "Throughput a Confronto", "type": "timeseries"
+    },
+    { "gridPos": { "h": 2, "w": 24, "x": 0, "y": 12 }, "id": 22, "options": { "content": "## ⏱️ Latenza p95 (secondi)", "mode": "markdown" }, "type": "text" },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" } },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 }, "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" }, "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket{job=\"base_mongodb\"}[1m])) by (le))", "legendFormat": "MongoDB (BASE)", "refId": "A" },
+        { "datasource": { "type": "prometheus", "uid": "prometheus_ds_unified" }, "expr": "histogram_quantile(0.95, sum(rate(request_latency_seconds_bucket{job=\"acid_postgres\"}[1m])) by (le))", "legendFormat": "PostgreSQL (ACID)", "refId": "B" }
+      ],
+      "title": "Latenza p95 a Confronto", "type": "timeseries"
+    }
+  ],
+  "refresh": "10s", "schemaVersion": 38, "style": "dark", "tags": [], "templating": { "list": [] },
+  "time": { "from": "now-15m", "to": "now" }, "timepicker": {}, "timezone": "browser",
+  "title": "Comparison Dashboard", "uid": "c10e3c0e-42ee-42d7-a5f1-61b8f0f08e47", "version": 1
+}

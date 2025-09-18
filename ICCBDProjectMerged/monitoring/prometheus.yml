@@ -1,0 +1,16 @@
+# monitoring/prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'base_mongodb'
+    dns_sd_configs:
+      - names: ['base-app']
+        type: 'A'
+        port: 9464
+
+  - job_name: 'acid_postgres'
+    dns_sd_configs:
+      - names: ['acid-app']
+        type: 'A'
+        port: 9464
