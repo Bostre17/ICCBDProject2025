@@ -1,0 +1,42 @@
+groups:
+  - name: edge_alerts
+    interval: 30s
+    rules:
+      - alert: HighTemperature
+        expr: edge_temperature_sensor_temperature > 30
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High temperature detected"
+          description: "Temperature {{ $value }}°C on {{ $labels.agent_id }}"
+      
+      - alert: EdgeAgentDown
+        expr: up{job=~"edge_agent.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Edge agent is down"
+          description: "Agent {{ $labels.agent_id }} is not responding"
+
+  - name: middleware_alerts
+    interval: 30s
+    rules:
+      - alert: HighProcessingLatency
+        expr: histogram_quantile(0.95, rate(middleware_processing_seconds_bucket[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High processing latency"
+          description: "P95 latency is {{ $value }}s"
+      
+      - alert: MiddlewareDown
+        expr: up{job="middleware-gateway"} == 0 or up{job="middleware-processor"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Middleware component is down"
+          description: "{{ $labels.job }} is not responding"

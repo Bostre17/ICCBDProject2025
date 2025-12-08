@@ -1,0 +1,62 @@
+# prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'cloud-continuum-poc'
+    environment: 'dev'
+
+# Alerting configuration (opzionale)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Carica regole di alert
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+scrape_configs:
+  # Scrape Prometheus stesso
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          layer: 'cloud'
+          component: 'prometheus'
+
+  # Scrape Pushgateway (metriche da edge agents)
+  - job_name: 'pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']
+        labels:
+          layer: 'fog'
+          component: 'pushgateway'
+
+  # Scrape Middleware Gateway
+  - job_name: 'middleware-gateway'
+    static_configs:
+      - targets: ['middleware-gateway:8000']
+        labels:
+          layer: 'fog'
+          component: 'gateway'
+    metrics_path: '/metrics'
+
+  # Scrape Middleware Processor
+  - job_name: 'middleware-processor'
+    static_configs:
+      - targets: ['middleware-processor:8001']
+        labels:
+          layer: 'fog'
+          component: 'processor'
+    metrics_path: '/metrics'
+
+  # Redis Exporter (se vogliamo monitorare Redis)
+  # Decommentare se aggiungiamo redis-exporter
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #       labels:
+  #         layer: 'fog'
+  #         component: 'redis'

@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  # ==================== EDGE LAYER ====================
+  
+  # Edge Agent 1 - Simula sensore IoT zona A
+  edge-agent-1:
+    build: ./edge-agent
+    container_name: edge-agent-1
+    environment:
+      - AGENT_ID=edge-001
+      - AGENT_LOCATION=zone-a
+      - AGENT_TYPE=temperature-sensor
+      - MIDDLEWARE_URL=http://middleware-gateway:8000
+      - PUSH_INTERVAL=5
+    networks:
+      - edge-network
+    depends_on:
+      - middleware-gateway
+
+  # Edge Agent 2 - Simula sensore IoT zona B
+  edge-agent-2:
+    build: ./edge-agent
+    container_name: edge-agent-2
+    environment:
+      - AGENT_ID=edge-002
+      - AGENT_LOCATION=zone-b
+      - AGENT_TYPE=humidity-sensor
+      - MIDDLEWARE_URL=http://middleware-gateway:8000
+      - PUSH_INTERVAL=7
+    networks:
+      - edge-network
+    depends_on:
+      - middleware-gateway
+
+  # Edge Agent 3 - Simula gateway edge
+  edge-agent-3:
+    build: ./edge-agent
+    container_name: edge-agent-3
+    environment:
+      - AGENT_ID=edge-003
+      - AGENT_LOCATION=zone-a
+      - AGENT_TYPE=gateway
+      - MIDDLEWARE_URL=http://middleware-gateway:8000
+      - PUSH_INTERVAL=10
+    networks:
+      - edge-network
+    depends_on:
+      - middleware-gateway
+
+  # ==================== FOG/MIDDLEWARE LAYER ====================
+  
+  # API Gateway - Punto di ingresso middleware
+  middleware-gateway:
+    build: ./middleware-gateway
+    container_name: middleware-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
+      - PROCESSOR_URL=http://middleware-processor:8001
+    networks:
+      - edge-network
+      - middleware-network
+    depends_on:
+      - redis
+      - pushgateway
+      - middleware-processor
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Processing Pipeline - Elaborazione e normalizzazione
+  middleware-processor:
+    build: ./middleware-processor
+    container_name: middleware-processor
+    ports:
+      - "8001:8001"
+    environment:
+      - REDIS_HOST=redis
+      - PROMETHEUS_PUSHGATEWAY=http://pushgateway:9091
+    networks:
+      - middleware-network
+    depends_on:
+      - redis
+      - pushgateway
+
+  # Redis - Buffering e caching
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    networks:
+      - middleware-network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+  # Prometheus Pushgateway - Per metriche push-based
+  pushgateway:
+    image: prom/pushgateway:v1.6.2
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
+    networks:
+      - middleware-network
+      - cloud-network
+    command:
+      - '--persistence.file=/data/pushgateway.data'
+      - '--persistence.interval=5m'
+    volumes:
+      - pushgateway-data:/data
+
+  # ==================== CLOUD LAYER ====================
+  
+  # Prometheus - Time-series database
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - cloud-network
+      - middleware-network
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+
+  # Grafana - Visualizzazione
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - cloud-network
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  # Loki - Log aggregation (opzionale ma utile)
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    ports:
+      - "3100:3100"
+    networks:
+      - cloud-network
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+
+networks:
+  edge-network:
+    driver: bridge
+  middleware-network:
+    driver: bridge
+  cloud-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  pushgateway-data:
+  redis-data:
+  loki-data:
